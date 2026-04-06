@@ -1,41 +1,45 @@
-// superadmin-web/src/pages/Credits.jsx
-import React from 'react';
-import { Button, Mono, Input, PageHeader, StatCard, ProgressBar, Card } from '../components/ui';
+import React, { useState, useEffect } from 'react';
+import { companiesAPI, superadminAPI } from '../api/client';
+import { Button, Mono, PageHeader, StatCard, ProgressBar } from '../components/ui';
 
 export default function Credits() {
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = () => companiesAPI.list().then(d=>setCompanies(d||[])).finally(()=>setLoading(false));
+  useEffect(() => { load(); }, []);
+
+  const topup = async (id, current, max) => {
+    const amt = prompt(`Add credits to this company (current: ${current}/${max}):`);
+    if (!amt || isNaN(amt)) return;
+    await superadminAPI.updateCredits(id, { action:'add', amount: parseInt(amt) });
+    load();
+  };
+
   return (
     <div>
-      <PageHeader breadcrumb="Superadmin / Credits" title="Credit management"
-        actions={<Button variant="teal" size="sm">Top up credits</Button>}
-      />
+      <PageHeader breadcrumb="Superadmin / Credits" title="Credit management" />
       <div className="page-body">
-        <div className="stat-grid mb-4">
-          <StatCard label="Total credits issued" value="580"  change="This cycle" changeType="neu" accent="navy"/>
-          <StatCard label="Credits used"          value="216"  change="37% consumed" changeType="neu" accent="amber"/>
-          <StatCard label="Credits remaining"     value="364"  change="Across 12 cos" changeType="up" accent="teal"/>
-          <StatCard label="Near limit (>90%)"     value="1"    change="Factory Site"  changeType="down" accent="red"/>
-        </div>
         <div className="table-wrap">
-          <div className="card-header"><span className="card-title">Company credit usage</span></div>
           <table>
             <thead><tr><th>Company</th><th>Plan</th><th>Used</th><th>Limit</th><th>Remaining</th><th>Usage</th><th>Actions</th></tr></thead>
             <tbody>
-              {[
-                {co:'Tech Corp',    plan:'pro',      used:78, max:100},
-                {co:'Logistics Ltd',plan:'business', used:41, max:80 },
-                {co:'Factory Site', plan:'starter',  used:92, max:100},
-                {co:'RetailCo',     plan:'free',     used:5,  max:50 },
-              ].map(r => (
-                <tr key={r.co}>
-                  <td style={{fontWeight:500,fontSize:13}}>{r.co}</td>
-                  <td><Mono size={11}>{r.plan}</Mono></td>
-                  <td><Mono size={12}>{r.used}</Mono></td>
-                  <td><Mono size={12}>{r.max}</Mono></td>
-                  <td><Mono size={12} color={r.max-r.used<10?'var(--red)':'var(--teal2)'}>{r.max-r.used}</Mono></td>
-                  <td style={{width:120}}><ProgressBar value={r.used} max={r.max}/></td>
-                  <td><Button variant="ghost" size="sm">+ Add</Button></td>
-                </tr>
-              ))}
+              {loading ? (
+                <tr><td colSpan={7} style={{ textAlign:'center', padding:32, color:'var(--muted)' }}>Loading...</td></tr>
+              ) : companies.map(c => {
+                const remaining = c.report_credits - c.credits_used;
+                return (
+                  <tr key={c.id}>
+                    <td style={{ fontWeight:500 }}>{c.name}</td>
+                    <td><Mono size={11}>{c.plan}</Mono></td>
+                    <td><Mono size={12}>{c.credits_used}</Mono></td>
+                    <td><Mono size={12}>{c.report_credits}</Mono></td>
+                    <td><Mono size={12} color={remaining<10?'var(--red)':'var(--teal2)'}>{remaining}</Mono></td>
+                    <td style={{ width:120 }}><ProgressBar value={c.credits_used} max={c.report_credits||1}/></td>
+                    <td><Button variant="ghost" size="sm" onClick={()=>topup(c.id, c.credits_used, c.report_credits)}>+ Add</Button></td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -1,55 +1,50 @@
-// superadmin-web/src/App.jsx
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { isLoggedIn, getUser } from './api/client';
 import AppShell from './components/layout/AppShell';
 import './index.css';
 
-// ── Lazy-loaded pages (code splitting — faster initial load) ──
+const Login      = lazy(() => import('./pages/Login'));
 const Dashboard  = lazy(() => import('./pages/Dashboard'));
 const Companies  = lazy(() => import('./pages/Companies'));
+const Employees  = lazy(() => import('./pages/Employees'));
 const Attendance = lazy(() => import('./pages/Attendance'));
 const Leaves     = lazy(() => import('./pages/Leaves'));
+const Geofences  = lazy(() => import('./pages/Geofences'));
+const Payroll    = lazy(() => import('./pages/Payroll'));
 const Audit      = lazy(() => import('./pages/Audit'));
-
-// Placeholder pages (extend as needed)
-const Analytics  = lazy(() => import('./pages/Dashboard'));  // reuse for now
-const Admins     = lazy(() => import('./pages/Companies'));
-const Geofences  = lazy(() => import('./pages/Dashboard'));
-const Employees  = lazy(() => import('./pages/Attendance'));
-const Shifts     = lazy(() => import('./pages/Dashboard'));
-const Payroll    = lazy(() => import('./pages/Dashboard'));
-const Credits    = lazy(() => import('./pages/Dashboard'));
-const Settings   = lazy(() => import('./pages/Dashboard'));
+const Credits    = lazy(() => import('./pages/Credits'));
 
 const Loading = () => (
-  <div style={{ padding: 40, textAlign: 'center', fontFamily: 'DM Mono, monospace', fontSize: 12, color: '#8A9BBB' }}>
+  <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', fontFamily:'DM Mono,monospace', fontSize:12, color:'#8A9BBB' }}>
     Loading...
   </div>
 );
 
+// Protected route — redirects to /login if not authenticated
+const Protected = ({ children }) => {
+  if (!isLoggedIn()) return <Navigate to="/login" replace />;
+  return <AppShell>{children}</AppShell>;
+};
+
 export default function App() {
   return (
     <BrowserRouter>
-      <AppShell>
-        <Suspense fallback={<Loading/>}>
-          <Routes>
-            <Route path="/"           element={<Dashboard/>}  />
-            <Route path="/analytics"  element={<Analytics/>}  />
-            <Route path="/companies"  element={<Companies/>}  />
-            <Route path="/admins"     element={<Admins/>}     />
-            <Route path="/geofences"  element={<Geofences/>}  />
-            <Route path="/employees"  element={<Employees/>}  />
-            <Route path="/attendance" element={<Attendance/>} />
-            <Route path="/leaves"     element={<Leaves/>}     />
-            <Route path="/shifts"     element={<Shifts/>}     />
-            <Route path="/payroll"    element={<Payroll/>}    />
-            <Route path="/credits"    element={<Credits/>}    />
-            <Route path="/audit"      element={<Audit/>}      />
-            <Route path="/settings"   element={<Settings/>}   />
-            <Route path="*"           element={<Navigate to="/" replace/>} />
-          </Routes>
-        </Suspense>
-      </AppShell>
+      <Suspense fallback={<Loading />}>
+        <Routes>
+          <Route path="/login" element={isLoggedIn() ? <Navigate to="/" replace /> : <Login />} />
+          <Route path="/"           element={<Protected><Dashboard  /></Protected>} />
+          <Route path="/companies"  element={<Protected><Companies  /></Protected>} />
+          <Route path="/employees"  element={<Protected><Employees  /></Protected>} />
+          <Route path="/attendance" element={<Protected><Attendance /></Protected>} />
+          <Route path="/leaves"     element={<Protected><Leaves     /></Protected>} />
+          <Route path="/geofences"  element={<Protected><Geofences  /></Protected>} />
+          <Route path="/payroll"    element={<Protected><Payroll    /></Protected>} />
+          <Route path="/audit"      element={<Protected><Audit      /></Protected>} />
+          <Route path="/credits"    element={<Protected><Credits    /></Protected>} />
+          <Route path="*"           element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

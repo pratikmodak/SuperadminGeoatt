@@ -1,56 +1,48 @@
-// superadmin-web/src/pages/Payroll.jsx
-import React, { useState } from 'react';
-import { Badge, Avatar, Button, Mono, Select, Input, PageHeader, StatCard, Card } from '../components/ui';
+import React, { useState, useEffect } from 'react';
+import { companiesAPI, reportsAPI } from '../api/client';
+import { Button, Mono, PageHeader, StatCard } from '../components/ui';
 
 export default function Payroll() {
-  const [period, setPeriod] = useState('March 2026');
+  const [companies, setCompanies] = useState([]);
+  const [coId,    setCo]        = useState('');
+  const [month,   setMonth]     = useState(String(new Date().getMonth()+1).padStart(2,'0'));
+  const [year,    setYear]      = useState(String(new Date().getFullYear()));
+
+  useEffect(() => { companiesAPI.list().then(d=>setCompanies(d||[])); }, []);
+
+  const download = (type) => {
+    if (!coId) return alert('Select a company first');
+    if (type === 'attendance') reportsAPI.downloadAttendance({ month, year, company_id: coId });
+    else reportsAPI.downloadPayroll({ month, year, company_id: coId });
+  };
 
   return (
     <div>
-      <PageHeader breadcrumb="Superadmin / Payroll" title="Payroll"
-        actions={<>
-          <Select options={['March 2026','February 2026','January 2026']} value={period} onChange={e=>setPeriod(e.target.value)} style={{width:160,marginBottom:0}}/>
-          <Button variant="primary" size="sm">Compute records</Button>
-          <Button variant="ghost" size="sm">Export greytHR</Button>
-          <Button variant="ghost" size="sm">Export Zoho</Button>
-        </>}
-      />
+      <PageHeader breadcrumb="Superadmin / Payroll" title="Payroll & reports" />
       <div className="page-body">
-        <div className="stat-grid mb-4">
-          <StatCard label="Total employees"  value="847" change="Processed" changeType="neu" accent="navy"/>
-          <StatCard label="Working days"     value="26"  change="March 2026" changeType="neu" accent="teal"/>
-          <StatCard label="Avg present days" value="23"  change="88.5% rate" changeType="up" accent="teal"/>
-          <StatCard label="OT hours total"   value="342" change="Across all" changeType="neu" accent="amber"/>
+        <div className="flex gap-2 mb-4">
+          <select className="input-field" style={{ width:220, marginBottom:0 }} value={coId} onChange={e=>setCo(e.target.value)}>
+            <option value="">Select company</option>
+            {companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <select className="input-field" style={{ width:120, marginBottom:0 }} value={month} onChange={e=>setMonth(e.target.value)}>
+            {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m=><option key={m}>{m}</option>)}
+          </select>
+          <select className="input-field" style={{ width:100, marginBottom:0 }} value={year} onChange={e=>setYear(e.target.value)}>
+            {['2025','2026','2027'].map(y=><option key={y}>{y}</option>)}
+          </select>
         </div>
-        <div className="table-wrap">
-          <div className="card-header">
-            <span className="card-title">Payroll records — {period}</span>
-            <Button variant="ghost" size="sm">Export Excel (3 sheets)</Button>
+        <div style={{ display:'flex', gap:12 }}>
+          <div style={{ background:'var(--white)', border:'1px solid var(--border)', borderRadius:12, padding:20, flex:1 }}>
+            <div style={{ fontWeight:500, fontSize:14, color:'var(--navy)', marginBottom:6 }}>Attendance Excel</div>
+            <div style={{ fontSize:12, color:'var(--muted)', marginBottom:16 }}>Full month attendance for all employees — P/A/L/WO codes</div>
+            <Button variant="primary" size="sm" onClick={()=>download('attendance')}>Download Excel</Button>
           </div>
-          <table>
-            <thead>
-              <tr><th>Employee</th><th>Company</th><th>Working days</th><th>Present</th><th>Absent</th><th>Late</th><th>OT hours</th><th>Actions</th></tr>
-            </thead>
-            <tbody>
-              {[
-                {name:'Ravi Kumar',  code:'TC-0042',co:'Tech Corp', wd:26,pr:25,ab:1, lt:0, ot:4.5},
-                {name:'Priya Mehta', code:'TC-0038',co:'Tech Corp', wd:26,pr:23,ab:2, lt:3, ot:2.0},
-                {name:'Vikram Shah', code:'LL-0017',co:'Logistics', wd:26,pr:24,ab:1, lt:1, ot:8.0},
-                {name:'Deepa Patil', code:'LL-0041',co:'Logistics', wd:26,pr:26,ab:0, lt:0, ot:0.0},
-              ].map(r => (
-                <tr key={r.code}>
-                  <td><div className="flex items-center gap-2"><Avatar name={r.name} size="sm" color="teal"/><div><div style={{fontWeight:500,fontSize:13}}>{r.name}</div><Mono size={10} color="var(--muted)">{r.code}</Mono></div></div></td>
-                  <td style={{fontSize:12}}>{r.co}</td>
-                  <td><Mono size={12}>{r.wd}</Mono></td>
-                  <td><Mono size={12} color="var(--teal2)">{r.pr}</Mono></td>
-                  <td><Mono size={12} color={r.ab>0?'var(--red)':'var(--muted)'}>{r.ab}</Mono></td>
-                  <td><Mono size={12} color={r.lt>0?'var(--amber)':'var(--muted)'}>{r.lt}</Mono></td>
-                  <td><Mono size={12}>{r.ot.toFixed(1)}</Mono></td>
-                  <td><Button variant="ghost" size="sm">View</Button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div style={{ background:'var(--white)', border:'1px solid var(--border)', borderRadius:12, padding:20, flex:1 }}>
+            <div style={{ fontWeight:500, fontSize:14, color:'var(--navy)', marginBottom:6 }}>Payroll summary Excel</div>
+            <div style={{ fontSize:12, color:'var(--muted)', marginBottom:16 }}>Working days, present, absent, OT hours per employee</div>
+            <Button variant="ghost" size="sm" onClick={()=>download('payroll')}>Download Excel</Button>
+          </div>
         </div>
       </div>
     </div>
