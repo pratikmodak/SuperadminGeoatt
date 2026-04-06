@@ -1,0 +1,20 @@
+// superadmin-web/src/constants/theme.js
+export const colors = {
+  navy:     '#0A1628',
+  navy2:    '#0F2040',
+  navy3:    '#162B52',
+  teal:     '#00D4AA',
+  teal2:    '#00B894',
+  teal3:    '#00EFC0',
+  tealBg:   '#EBF9F6',
+  white:    '#FFFFFF',
+  offWhite: '#F7F9FC',
+  slate:    '#E8EEF7',
+  muted:    '#8A9BBB',
+  border:   '#DDE5F0',
+  border2:  '#C8D6EC',
+  red:      '#FF4757',
+  redBg:    '#FFF0F1',
+  amber:    '#FFA500',
+  amberBg:  '#FFF8EE',
+};
