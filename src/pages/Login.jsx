@@ -55,7 +55,7 @@ export default function Login() {
             </button>
           </form>
         </div>
-        <p style={{ textAlign:'center', marginTop:24, fontFamily:'DM Mono,monospace', fontSize:11, color:'#C0CCDD' }}>GeoAttend · Ligera Technology</p>
+        <p style={{ textAlign:'center', marginTop:24, fontFamily:'DM Mono,monospace', fontSize:11, color:'#C0CCDD' }}>GeoAttend . Aaryans Management </p>
       </div>
     </div>
   );
