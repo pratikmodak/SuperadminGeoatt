@@ -19,7 +19,7 @@ export default function Login() {
       setError(err.message || 'Invalid email or password');
     } finally {
       setLoading(false);
-    }
+    } 
   };
 
   return (
